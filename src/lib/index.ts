@@ -32,6 +32,7 @@ export const MangaSchema = z.object({
     pages: z.array(z.object({
       page: z.string(),
       bgm: z.string().nullable(),
+      se: z.array(z.string()),
     }))
   }))
 });
@@ -152,9 +153,20 @@ export const getBGM = async (path: string): Promise<Blob> => {
   return blob;
 };
 
+export const getSE = async (path: string): Promise<Blob> => {
+  const fullPath = `se/${path}.ogg`;
+  const blob = await getBlob(fullPath);
+  if (blob === null) {
+    throw new Error(`SE file not found: ${fullPath}`);
+  }
+
+  return blob;
+};
+
 const validateMangaSpec = async (mangaSpec: MangaSpec): Promise<Manga> => {
   let pagesToCheck: Array<{ chapterIndex: number, page: string }> = [];
   let bgmToCheck: Array<string> = [];
+  let seToCheck: Array<string> = [];
 
   const chapters: Manga["chapters"] = Object.values(mangaSpec.chapters).map((chapter) => {
     return {
@@ -170,12 +182,17 @@ const validateMangaSpec = async (mangaSpec: MangaSpec): Promise<Manga> => {
       if (bgm !== null) {
         bgmToCheck.push(bgm);
       }
+
+      for (const se of pageInfo.se) {
+        seToCheck.push(se);
+      }
     }
   });
 
   await Promise.all(pagesToCheck.map(getPage));
   await Promise.all(bgmToCheck.map(getBGM));
-  
+  await Promise.all(seToCheck.map(getSE));
+
   return { title: mangaSpec.title, chapters };
 };
 

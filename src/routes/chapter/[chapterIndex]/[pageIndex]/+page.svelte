@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getBGM, getPage, manga } from "$lib";
+  import { getBGM, getPage, getSE, manga } from "$lib";
   import { onMount } from "svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { pushState } from "$app/navigation";
@@ -8,21 +8,40 @@
   let chapterIndex: number = $state(parseInt(page.params.chapterIndex));
   let pageIndex: number = $state(parseInt(page.params.pageIndex));
 
+  let pageCache: Record<string, string> = {};
+  const makePageUrlCached = async ({ page, chapterIndex }: { page: string, chapterIndex: number }) => {
+    const key = `${chapterIndex}-${page}`;
+
+    if (pageCache[key] === undefined) {
+      pageCache[key] = URL.createObjectURL(await getPage({ chapterIndex, page }));
+    }
+
+    return pageCache[key];
+  };
+
+  let bgmCache: Record<string, string> = {};
+  const makeBgmUrlCached = async (bgm: string) => {
+    if (bgmCache[bgm] === undefined) {
+      bgmCache[bgm] = URL.createObjectURL(await getBGM(bgm));
+    }
+
+    return bgmCache[bgm];
+  };
+
+  let seCache: Record<string, string> = {};
+  const makeSeUrlCached = async (se: string) => {
+    if (seCache[se] === undefined) {
+      seCache[se] = URL.createObjectURL(await getSE(se));
+    }
+
+    return seCache[se];
+  };
+
   let mangaPageUrl: string | null = $state(null);
-  let lastBgm: string | null = $state(null);
-  let bgmUrl: string | null = $state(null);
-  let audioElement: HTMLAudioElement | null = $state(null);
+  let bgmUrls: Array<string> = $state([]);
 
   function handleInteraction(event: Event) {
-    if (audioElement) {
-      audioElement.play()
-        .then(() => {
-          // Audio successfully playing
-        })
-        .catch(error => {
-          console.error("Audio play failed:", error);
-        });
-    }
+    attemptAutoplay();
 
     if (event instanceof KeyboardEvent) {
       // Handle keyboard navigation
@@ -38,9 +57,21 @@
   }
 
   function attemptAutoplay() {
-    if (audioElement && bgmUrl !== null) {
-      audioElement.play();
-    }
+    // Get all background sound elements
+    const backgroundSounds = document.querySelectorAll('.background-sound');
+    
+    // Check each element and play if it's an audio element
+    backgroundSounds.forEach(element => {
+      if (element instanceof HTMLAudioElement) {
+        element.play()
+          .then(() => {
+            // Audio successfully playing
+          })
+          .catch(error => {
+            console.error("Background sound play failed:", error);
+          });
+      }
+    });
   }
 
   function navigateToPreviousPage() {
@@ -76,6 +107,28 @@
 
     pushState(`/chapter/${chapterIndex}/${pageIndex}`, {});
   }
+  
+  const onPageChange = async ({ page, bgm, se }: { page: string, bgm: string | null, se: Array<string> }) => {
+    mangaPageUrl = await makePageUrlCached({ page, chapterIndex });
+    let newBgmUrls: Array<string> = [];
+
+    if (bgm !== null) {
+      newBgmUrls = [
+        ...newBgmUrls,
+        await makeBgmUrlCached(bgm),
+      ];
+    }
+
+    for (const soundEffect of se) {
+      newBgmUrls = [
+        ...newBgmUrls,
+        await makeSeUrlCached(soundEffect),
+      ];
+    }
+    
+    bgmUrls = newBgmUrls;
+    setTimeout(attemptAutoplay, 100);
+  };
 
   $effect(() => {
     if ($manga === null) {
@@ -95,28 +148,7 @@
       return;
     }
 
-    (async () => {
-      const mangaPageImage = await getPage({ chapterIndex, page: mangaPage.page });
-      mangaPageUrl = URL.createObjectURL(mangaPageImage);
-    })();
-    (async () => {
-      if (mangaPage.bgm !== null) {
-        const bgm = await getBGM(mangaPage.bgm!);
-
-        if (lastBgm !== mangaPage.bgm) {
-          console.log(bgm);
-          bgmUrl = URL.createObjectURL(bgm);
-
-          setTimeout(attemptAutoplay, 50);
-
-          lastBgm = mangaPage.bgm;
-        }
-      }
-      else {
-        lastBgm = null;
-        bgmUrl = null;
-      }
-    })();
+    onPageChange(mangaPage);
   });
 
   onMount(() => {
@@ -146,13 +178,11 @@
       {#if mangaPageUrl !== null}
         <img src={mangaPageUrl} alt="Manga Page" />
       {/if}
-      {#if bgmUrl !== null}
-        {#key bgmUrl}
-          <audio bind:this={audioElement} loop>
-            <source src={bgmUrl} type="audio/ogg" />
-          </audio>
-        {/key}
-      {/if}
+      {#each bgmUrls as bgmUrl (bgmUrl)}
+        <audio class="background-sound" loop>
+          <source src={bgmUrl} type="audio/ogg" />
+        </audio>
+      {/each}
     </div>
     
     <button class="nav-button next-button" onclick={navigateToNextPage}>
