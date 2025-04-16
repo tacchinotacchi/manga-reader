@@ -16,7 +16,7 @@ const config = {
 			// default options are shown
 			pages: 'build',
 			assets: 'build',
-			fallback: 'index.html',
+			fallback: null,
 			precompress: false,
 			strict: true
 		}),
@@ -25,6 +25,9 @@ const config = {
 			$lib: "./src/lib",
 			$routes: "./src/routes",
 		},
+		prerender: {
+			entries: ['*']
+		}
 	}
 };
 
