@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { manga, processFolder } from "$lib/index";
+  import { manga, processFiles, resetDatabase, voiceVolume, seVolume, bgmVolume } from "$lib/index";
 
   let progress = 0;
   let isProcessing = false;
   let result: { processed: number; errors: string[] } | null = null;
 
-  function handleFolderSelect() {
+  function handleLoadFiles(fn: (files: FileList, progressCallback?: (progress: number) => void) => Promise<{ processed: number; errors: string[] }>) {
     const input = document.createElement('input');
     input.type = 'file';
     input.setAttribute('webkitdirectory', '');
@@ -16,7 +16,7 @@
         isProcessing = true;
         
         try {
-          result = await processFolder(event.target.files, (progressValue) => {
+          result = await fn(event.target.files, (progressValue) => {
             progress = progressValue;
           });
         } catch (error) {
@@ -29,14 +29,65 @@
     
     input.click();
   }
+
+  function handleLoadEpisode() {
+    handleLoadFiles((files, progressCallback) => $processFiles(files, false, progressCallback));
+  }
+
+  function handleLoadSound() {
+    handleLoadFiles((files, progressCallback) => $processFiles(files, true, progressCallback));
+  }
 </script>
 
 <div class="main-container">
   <div class="loading-container">
-    <h1>Manga Reader</h1>
-    
-    <button on:click={handleFolderSelect} disabled={isProcessing}>
-      {isProcessing ? 'Processing...' : 'Select Folder'}
+    <div class="title">
+      Input
+    </div>
+
+    <div>
+      These buttons do NOT upload anything to the internet!
+    </div>
+
+    <div>
+      They only load the files into your browser's memory.
+    </div>
+
+
+    <div>
+      Expected folder structure for the episode:
+      <pre class="code">script.json
+img/
+  ch-1/
+    01.jpg
+    ...
+voice/
+  ch-1/
+    01.ogg
+    ...</pre>
+    </div>
+    <button class="load-button" on:click={handleLoadEpisode} disabled={isProcessing}>
+      {isProcessing ? 'Processing...' : 'Load episode'}
+    </button>
+
+    <div>
+      Expected folder structure for the sound files:
+      <pre class="code">se/
+  001.ogg
+  ...
+bgm/
+  001.ogg
+  ...</pre>
+    </div>
+    <button class="load-button" on:click={handleLoadSound} disabled={isProcessing}>
+      {isProcessing ? 'Processing...' : 'Load sound files'}
+    </button>
+
+    <div>
+      Use this button before loading a new episode.
+    </div>
+    <button class="load-button" on:click={resetDatabase} disabled={isProcessing}>
+      Reset
     </button>
     
     {#if isProcessing}
@@ -47,52 +98,121 @@
     {/if}
     
     {#if result !== null}
-      <div class="result">
-        <p>Processed {result.processed} files</p>
-        {#if result.errors.length > 0}
-          <div class="errors">
-            <h3>Errors ({result.errors.length}):</h3>
-            <ul>
-              {#each result.errors as error}
-                <li>{error}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-      </div>
+      <div>Processed {result.processed} files</div>
+      {#if result.errors.length > 0}
+        <div class="errors">
+          <h3>Errors ({result.errors.length}):</h3>
+          <ul>
+            {#each result.errors as error}
+              <li>{error}</li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
     {/if}
   </div>
 
+  <div class="vertical-divider"></div>
+
   <div class="toc-container">
-    <h1>Table of Contents</h1>
+    <div class="title">Table of Contents</div>
     {#each $manga?.chapters ?? [] as chapter, chapterIndex}
       <div class="chapter">
         <a href={`/chapter/${chapterIndex}`}>{chapter.title}</a>
       </div>
     {/each}
   </div>
+
+  <div class="vertical-divider"></div>
+
+  <div class="settings-container">
+    <div class="title">Settings</div>
+    <div class="settings-content">
+      <label for="voice-volume">Voice Volume: {Math.round($voiceVolume)}</label>
+      <input 
+        type="range"
+        id="voice-volume"
+        min="0"
+        max="100"
+        bind:value={$voiceVolume}
+      />
+      
+      <label for="se-volume">Sound Effect Volume: {Math.round($seVolume)}</label>
+      <input 
+        type="range" 
+        id="se-volume" 
+        min="0" 
+        max="100" 
+        bind:value={$seVolume}
+      />
+      
+      <label for="bgm-volume">Background Music Volume: {Math.round($bgmVolume)}</label>
+      <input 
+        type="range" 
+        id="bgm-volume" 
+        min="0" 
+        max="100" 
+        bind:value={$bgmVolume}
+      />
+    </div>
+  </div>
 </div>
 
 <style>
+  .title {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .vertical-divider {
+    width: 1px;
+    background-color: var(--color-muted);
+  }
+
   .main-container {
     display: flex;
     flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
     gap: 2em;
+
+    padding-left: 10em;
+    padding-right: 10em;
+
+    height: 100%;
   }
 
   .loading-container {
     display: flex;
     flex-direction: column;
+    gap: 1em;
+  }
+
+  .settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+  
+  .settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+
+  .load-button {
+    max-width: 20em;
   }
 
   .toc-container {
     display: flex;
     flex-direction: column;
+    min-width: 20em;
   }
-  
+
   button {
     padding: 0.8rem 1.5rem;
-    background-color: #4a5568;
+    background-color: var(--color-primary);
     color: white;
     border: none;
     border-radius: 0.25rem;
@@ -102,7 +222,7 @@
   }
   
   button:hover:not(:disabled) {
-    background-color: #2d3748;
+    background-color: color-mix(in srgb, var(--color-primary) 80%, var(--color-contrast) 20%);
   }
   
   button:disabled {
@@ -113,7 +233,7 @@
   .progress {
     margin-top: 1rem;
     height: 20px;
-    background-color: #e2e8f0;
+    background-color: var(--color-background);
     border-radius: 0.25rem;
     overflow: hidden;
     position: relative;
@@ -121,7 +241,7 @@
   
   .progress-bar {
     height: 100%;
-    background-color: #4a5568;
+    background-color: var(--color-primary);
     transition: width 0.3s ease;
   }
   
@@ -139,15 +259,16 @@
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
   
-  .result {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background-color: #f7fafc;
-    border-radius: 0.25rem;
-  }
-  
   .errors {
     margin-top: 1rem;
     color: #e53e3e;
+  }
+
+  .code {
+    background-color: color-mix(in srgb, var(--color-background) 90%, var(--color-contrast) 10%);
+    border-radius: 0.25rem;
+    border: 1px solid var(--color-muted);
+    padding: 0.5rem;
+    font-size: 0.8rem;
   }
 </style>

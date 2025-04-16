@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getBGM, getPage, getSE, manga } from "$lib";
+  import { getBGM, getPage, getSE, getVoice, manga } from "$lib";
   import { onMount } from "svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { pushState } from "$app/navigation";
@@ -108,7 +108,7 @@
     pushState(`/chapter/${chapterIndex}/${pageIndex}`, {});
   }
   
-  const onPageChange = async ({ page, bgm, se }: { page: string, bgm: string | null, se: Array<string> }) => {
+  const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {
     mangaPageUrl = await makePageUrlCached({ page, chapterIndex });
     let newBgmUrls: Array<string> = [];
 
@@ -125,7 +125,14 @@
         await makeSeUrlCached(soundEffect),
       ];
     }
-    
+
+    if (voice) {
+      newBgmUrls = [
+        ...newBgmUrls,
+        URL.createObjectURL(await getVoice({ chapterIndex, page })),
+      ];
+    }
+
     bgmUrls = newBgmUrls;
     setTimeout(attemptAutoplay, 100);
   };

@@ -1,4 +1,5 @@
 import { persisted } from "svelte-persisted-store";
+import { derived } from "svelte/store";
 
 import { z } from "zod";
 
@@ -33,6 +34,7 @@ export const MangaSchema = z.object({
       page: z.string(),
       bgm: z.string().nullable(),
       se: z.array(z.string()),
+      voice: z.boolean()
     }))
   }))
 });
@@ -132,6 +134,9 @@ const processScriptFile = async (file: File) => {
 };
 
 export const manga = persisted<Manga | null>("manga", null);
+export const voiceVolume = persisted<number>("voice-volume", 100);
+export const seVolume = persisted<number>("se-volume", 100);
+export const bgmVolume = persisted<number>("bgm-volume", 100);
 
 export const getPage = async ({ chapterIndex, page }: { chapterIndex: number, page: string }): Promise<Blob> => {
   const fullPath = `img/ch-${chapterIndex + 1}/${page}.jpg`;
@@ -163,10 +168,20 @@ export const getSE = async (path: string): Promise<Blob> => {
   return blob;
 };
 
+export const getVoice = async ({ chapterIndex, page }: { chapterIndex: number, page: string }): Promise<Blob> => {
+  const fullPath = `voice/ch-${chapterIndex + 1}/${page}.ogg`;
+  const blob = await getBlob(fullPath);
+  if (blob === null) {
+    throw new Error(`Voice file not found: ${fullPath}`);
+  }
+
+  return blob;
+};
+
+
 const validateMangaSpec = async (mangaSpec: MangaSpec): Promise<Manga> => {
   let pagesToCheck: Array<{ chapterIndex: number, page: string }> = [];
-  let bgmToCheck: Array<string> = [];
-  let seToCheck: Array<string> = [];
+  let voiceToCheck: Array<{ chapterIndex: number, page: string }> = [];
 
   const chapters: Manga["chapters"] = Object.values(mangaSpec.chapters).map((chapter) => {
     return {
@@ -177,28 +192,52 @@ const validateMangaSpec = async (mangaSpec: MangaSpec): Promise<Manga> => {
 
   chapters.forEach((chapter, chapterIndex) => {
     for (const pageInfo of Object.values(chapter.pages)) {
-      const { page, bgm } = pageInfo;
+      const { page, bgm, voice } = pageInfo;
       pagesToCheck.push({ chapterIndex, page });
-      if (bgm !== null) {
-        bgmToCheck.push(bgm);
-      }
 
-      for (const se of pageInfo.se) {
-        seToCheck.push(se);
+      if (voice) {
+        voiceToCheck.push({ chapterIndex, page });
       }
     }
   });
 
   await Promise.all(pagesToCheck.map(getPage));
-  await Promise.all(bgmToCheck.map(getBGM));
-  await Promise.all(seToCheck.map(getSE));
+  await Promise.all(voiceToCheck.map(getVoice));
 
   return { title: mangaSpec.title, chapters };
 };
 
-export const processFolder = async (
+const checkSoundFiles = async ($manga: Manga | null): Promise<void> => {
+  if ($manga === null) {
+    throw new Error("Load manga first");
+  }
+
+  let bgmToCheck: Array<string> = [];
+  let seToCheck: Array<string> = [];
+
+  const chapters = $manga.chapters;
+  for (const chapter of chapters) {
+    const pages = chapter.pages;
+    for (const page of pages) {
+      const { bgm, se, voice } = page;
+
+      if (bgm !== null) {
+        bgmToCheck.push(bgm);
+      }
+      for (const soundEffect of se) {
+        seToCheck.push(soundEffect);
+      }
+    }
+  }
+
+  await Promise.all(bgmToCheck.map(getBGM));
+  await Promise.all(seToCheck.map(getSE));
+};
+
+export const processFiles = derived(manga, ($manga) => async (
   files: FileList,
-  progressCallback?: (progress: number) => void
+  loadingSoundFiles: boolean,
+  progressCallback?: (progress: number) => void,
 ): Promise<{ processed: number; errors: string[] }> => {
   const shaveFirstFolder = (path: string) => {
     const parts = path.split('/');
@@ -220,7 +259,7 @@ export const processFolder = async (
 
   for (let i = 0; i < total; i += BATCH_SIZE) {
     const batch = filesArray.slice(i, i + BATCH_SIZE);
-    
+
     await Promise.all(
       batch.map(async (file) => {
         if (file.name === 'script.json') {
@@ -245,13 +284,37 @@ export const processFolder = async (
     }
   }
 
-  const scriptFile = filesArray.find(file => file.name === 'script.json');
-  if (scriptFile) {
-    const mangaSpec: MangaSpec = await processScriptFile(scriptFile);
-    const mangaEnsured: Manga = await validateMangaSpec(mangaSpec);
+  if (!loadingSoundFiles) {
+    const scriptFile = filesArray.find(file => file.name === 'script.json');
+    if (scriptFile) {
+      const mangaSpec: MangaSpec = await processScriptFile(scriptFile);
+      const mangaEnsured: Manga = await validateMangaSpec(mangaSpec);
 
-    manga.set(mangaEnsured);
+      manga.set(mangaEnsured);
+    }
   }
-  
+  else {
+    await checkSoundFiles($manga);
+  }
+    
   return result;
+});
+
+export const resetDatabase = async () => {
+  // Clear the IndexedDB database
+  return new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase("manga-reader-db");
+    
+    request.onsuccess = () => {
+      console.log("Database successfully deleted");
+      // Reset the manga store
+      manga.set(null);
+      resolve();
+    };
+    
+    request.onerror = (event) => {
+      console.error("Error deleting database:", event);
+      reject(new Error("Failed to delete database"));
+    };
+  });
 };
