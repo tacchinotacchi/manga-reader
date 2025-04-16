@@ -128,40 +128,49 @@ bgm/
   <div class="settings-container">
     <div class="title">Settings</div>
     <div class="settings-content">
-      <label for="voice-volume">Voice Volume: {Math.round($voiceVolume)}</label>
-      <input 
-        type="range"
-        id="voice-volume"
-        min="0"
-        max="100"
-        bind:value={$voiceVolume}
-      />
+      <div class="settings-content-group">
+        <label for="voice-volume">Voice Volume: {Math.round($voiceVolume)}</label>
+        <input 
+          type="range"
+          id="voice-volume"
+          min="0"
+          max="100"
+          bind:value={$voiceVolume}
+        />
+      </div>
       
-      <label for="se-volume">Sound Effect Volume: {Math.round($seVolume)}</label>
-      <input 
-        type="range" 
-        id="se-volume" 
-        min="0" 
-        max="100" 
-        bind:value={$seVolume}
-      />
+      <div class="settings-content-group">
+        <label for="se-volume">Sound Effect Volume: {Math.round($seVolume)}</label>
+        <input 
+          type="range" 
+          id="se-volume" 
+          min="0" 
+          max="100" 
+          bind:value={$seVolume}
+        />
+      </div>
       
-      <label for="bgm-volume">Background Music Volume: {Math.round($bgmVolume)}</label>
-      <input 
-        type="range" 
-        id="bgm-volume" 
-        min="0" 
-        max="100" 
-        bind:value={$bgmVolume}
-      />
+      <div class="settings-content-group">
+        <label for="bgm-volume">Background Music Volume: {Math.round($bgmVolume)}</label>
+        <input 
+          type="range" 
+          id="bgm-volume" 
+          min="0" 
+          max="100" 
+          bind:value={$bgmVolume}
+        />
+      </div>
     </div>
   </div>
 </div>
 
 <style>
+
+
   .title {
     font-size: 1.2em;
     font-weight: bold;
+    margin-bottom: 0.5em;
   }
 
   .vertical-divider {
@@ -185,7 +194,7 @@ bgm/
   .loading-container {
     display: flex;
     flex-direction: column;
-    gap: 1em;
+    gap: 0.5em;
   }
 
   .settings-container {
@@ -200,6 +209,13 @@ bgm/
     gap: 1em;
   }
 
+  .settings-content-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+
+
   .load-button {
     max-width: 20em;
   }
@@ -208,12 +224,13 @@ bgm/
     display: flex;
     flex-direction: column;
     min-width: 20em;
+    gap: 0.5em;
   }
 
-  button {
+  .load-button {
     padding: 0.8rem 1.5rem;
     background-color: var(--color-primary);
-    color: white;
+    color: var(--color-background);
     border: none;
     border-radius: 0.25rem;
     font-size: 1rem;
@@ -221,11 +238,11 @@ bgm/
     transition: background-color 0.2s;
   }
   
-  button:hover:not(:disabled) {
+  .load-button:hover:not(:disabled) {
     background-color: color-mix(in srgb, var(--color-primary) 80%, var(--color-contrast) 20%);
   }
   
-  button:disabled {
+  .load-button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
   }
@@ -270,5 +287,49 @@ bgm/
     border: 1px solid var(--color-muted);
     padding: 0.5rem;
     font-size: 0.8rem;
+  }
+
+  /* Styling for range inputs */
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-primary) 20%, var(--color-background) 80%);
+    outline: none;
+    border: 1px solid var(--color-muted);
+    margin: 8px 0;
+    position: relative;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    margin-top: -4px; /* centers the thumb on the track */
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    border: none;
+  }
+
+  input[type="range"]::-moz-range-progress {
+    background-color: var(--color-primary);
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 4px;
   }
 </style>

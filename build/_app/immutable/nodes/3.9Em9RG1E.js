@@ -1,0 +1,1 @@
+import"../chunks/CWj6FrbW.js";import{i as p}from"../chunks/BLUEuTwA.js";import{p as r,a as t}from"../chunks/B9NWKDUK.js";import{o as n}from"../chunks/6OZKxOy3.js";import{p as e}from"../chunks/BkiW5R2q.js";function l(i,o){r(o,!1);const a=e.params.chapterIndex;n(()=>{window.history.replaceState(null,"",`/chapter/${a}/0`),window.location.reload()}),p(),t()}export{l as component};

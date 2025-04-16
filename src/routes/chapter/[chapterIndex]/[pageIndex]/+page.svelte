@@ -172,11 +172,8 @@
 </script>
 
 <div class="container">
-  <div class="header">
-    <h1>Chapter {chapterIndex + 1} - Page {pageIndex + 1}</h1>
-  </div>
   <div class="manga-container" role="presentation">
-    <button class="nav-button prev-button" onclick={navigateToPreviousPage}>
+    <button class="nav-button" onclick={navigateToPreviousPage}>
       <ChevronLeft size={48} />
     </button>
     
@@ -192,7 +189,7 @@
       {/each}
     </div>
     
-    <button class="nav-button next-button" onclick={navigateToNextPage}>
+    <button class="nav-button" onclick={navigateToNextPage}>
       <ChevronRight size={48} />
     </button>
   </div>
@@ -215,6 +212,8 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+
+    gap: 3em;
   }
 
   .manga-content {
@@ -224,21 +223,8 @@
   }
 
   .nav-button {
-    background: rgba(0, 0, 0, 0.3);
+    background: transparent;
     border: none;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    margin: 0 10px;
-    color: white;
-    transition: background 0.2s;
-  }
-
-  .nav-button:hover {
-    background: rgba(0, 0, 0, 0.5);
+    color: var(--color-contrast);
   }
 </style>

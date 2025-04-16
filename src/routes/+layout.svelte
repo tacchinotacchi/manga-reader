@@ -1,10 +1,26 @@
 <script lang="ts">
   import "../app.css";
+  import { darkMode } from "$lib/index";
+
+  $effect(() => {
+    if ($darkMode) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+  });
 </script>
 
 <div class="everything">
   <div class="header">
-    <a href="/" class="title">Manga Reader</a>
+    <a href="/" class="title">seagulls.live</a>
+    <div class="header-right">
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <button class="toggle-button" onclick={() => $darkMode = !$darkMode}>
+        {$darkMode ? 'Light mode' : 'Dark mode'}
+      </button>
+    </div>
   </div>
 
   <div class="content">
@@ -38,5 +54,18 @@
     flex: 1;
     overflow-y: auto;
     padding: 0.5em;
+  }
+
+  .header-right {
+    margin-left: auto;
+  }
+
+  .toggle-button {
+    color: var(--color-contrast);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+    padding: 0.2em 0.5em;
   }
 </style>
