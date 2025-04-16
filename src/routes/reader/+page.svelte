@@ -120,7 +120,7 @@
       return;
     }
 
-    pushState(`/reader/?chapter=${chapterIndex}&page=${pageIndex}`, {});
+    pushState(`/reader?chapter=${chapterIndex}&page=${pageIndex}`, {});
   }
 
   function navigateToNextPage() {
@@ -136,7 +136,7 @@
       return;
     }
 
-    pushState(`/reader/?chapter=${chapterIndex}&page=${pageIndex}`, {});
+    pushState(`/reader?chapter=${chapterIndex}&page=${pageIndex}`, {});
   }
   
   const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {
