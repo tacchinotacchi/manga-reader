@@ -1,12 +1,28 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { getBGM, getPage, getSE, getVoice, manga } from "$lib";
   import { onMount } from "svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
+  import { browser } from "$app/environment";
   import { pushState } from "$app/navigation";
 
-  let chapterIndex: number = $state(parseInt(page.params.chapterIndex));
-  let pageIndex: number = $state(parseInt(page.params.pageIndex));
+  let chapterIndex: number = $state(0);
+  let pageIndex: number = $state(0);
+
+  onMount(() => {
+    if (browser) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const chapterParam = urlParams.get('chapter');
+      const pageParam = urlParams.get('page');
+      
+      if (chapterParam) {
+        chapterIndex = parseInt(chapterParam, 10) || 0;
+      }
+      
+      if (pageParam) {
+        pageIndex = parseInt(pageParam, 10) || 0;
+      }
+    }
+  });
 
   let pageCache: Record<string, string> = {};
   const makePageUrlCached = async ({ page, chapterIndex }: { page: string, chapterIndex: number }) => {
@@ -88,9 +104,10 @@
     }
     else {
       alert("No more pages");
+      return;
     }
 
-    pushState(`/chapter/${chapterIndex}/${pageIndex}`, {});
+    pushState(`/reader/?chapter=${chapterIndex}&page=${pageIndex}`, {});
   }
 
   function navigateToNextPage() {
@@ -103,9 +120,10 @@
     }
     else {
       alert("No more pages");
+      return;
     }
 
-    pushState(`/chapter/${chapterIndex}/${pageIndex}`, {});
+    pushState(`/reader/?chapter=${chapterIndex}&page=${pageIndex}`, {});
   }
   
   const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {

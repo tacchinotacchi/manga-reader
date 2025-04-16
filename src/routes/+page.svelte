@@ -118,7 +118,7 @@ bgm/
     <div class="title">Table of Contents</div>
     {#each $manga?.chapters ?? [] as chapter, chapterIndex}
       <div class="chapter">
-        <a href={`/chapter/${chapterIndex}`}>{chapter.title}</a>
+        <a href={`/reader?chapter=${chapterIndex}`}>{chapter.title}</a>
       </div>
     {/each}
   </div>
