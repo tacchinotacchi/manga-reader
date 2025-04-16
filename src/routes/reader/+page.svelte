@@ -10,19 +10,32 @@
 
   onMount(() => {
     if (browser) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const chapterParam = urlParams.get('chapter');
-      const pageParam = urlParams.get('page');
-      
-      if (chapterParam) {
-        chapterIndex = parseInt(chapterParam, 10) || 0;
-      }
-      
-      if (pageParam) {
-        pageIndex = parseInt(pageParam, 10) || 0;
-      }
+      loadFromUrl();
     }
+
+    // Listen for browser navigation events (back/forward buttons)
+    window.addEventListener('popstate', loadFromUrl);
+    window.addEventListener('pushstate', loadFromUrl);
+
+    return () => {
+      window.removeEventListener('popstate', loadFromUrl);
+      window.removeEventListener('pushstate', loadFromUrl);
+    };
   });
+
+  const loadFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterParam = urlParams.get('chapter');
+    const pageParam = urlParams.get('page');
+    
+    if (chapterParam) {
+      chapterIndex = parseInt(chapterParam, 10) || 0;
+    }
+    
+    if (pageParam) {
+      pageIndex = parseInt(pageParam, 10) || 0;
+    }
+  };
 
   let pageCache: Record<string, string> = {};
   const makePageUrlCached = async ({ page, chapterIndex }: { page: string, chapterIndex: number }) => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { manga, processFiles, resetDatabase, voiceVolume, seVolume, bgmVolume } from "$lib/index";
+  import { manga, processFiles, resetDatabase, voiceVolume, seVolume, bgmVolume, disableHeader } from "$lib/index";
 
   let progress = 0;
   let isProcessing = false;
@@ -160,6 +160,15 @@ bgm/
           bind:value={$bgmVolume}
         />
       </div>
+
+      <div class="settings-content-checkbox-group">
+        <label for="enable-header">Disable site header</label>
+        <input 
+          type="checkbox" 
+          id="disable-header" 
+          bind:checked={$disableHeader}
+        />
+      </div>
     </div>
   </div>
 </div>
@@ -215,6 +224,11 @@ bgm/
     gap: 0.5em;
   }
 
+  .settings-content-checkbox-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+  }
 
   .load-button {
     max-width: 20em;

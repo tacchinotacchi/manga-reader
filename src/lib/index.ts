@@ -135,6 +135,7 @@ const processScriptFile = async (file: File) => {
 
 export const manga = persisted<Manga | null>("manga", null);
 
+export const disableHeader = persisted<boolean>("disable-header", false);
 export const darkMode = persisted<boolean>("dark-mode", false);
 export const voiceVolume = persisted<number>("voice-volume", 100);
 export const seVolume = persisted<number>("se-volume", 100);

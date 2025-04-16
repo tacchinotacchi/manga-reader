@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import { darkMode } from "$lib/index";
+  import { darkMode, disableHeader } from "$lib/index";
 
   $effect(() => {
     if ($darkMode) {
@@ -12,16 +12,18 @@
 </script>
 
 <div class="everything">
-  <div class="header">
-    <a href="/" class="title">seagulls.live</a>
-    <div class="header-right">
+  {#if !$disableHeader}
+    <div class="header">
+      <a href="/" class="title">seagulls.live</a>
+      <div class="header-right">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <button class="toggle-button" onclick={() => $darkMode = !$darkMode}>
         {$darkMode ? 'Light mode' : 'Dark mode'}
       </button>
     </div>
-  </div>
+    </div>
+  {/if}
 
   <div class="content">
     <slot />
