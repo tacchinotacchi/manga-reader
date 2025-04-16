@@ -67,7 +67,7 @@
   };
 
   let mangaPageUrl: string | null = $state(null);
-  let bgmUrls: Array<string> = $state([]);
+  let bgms: Array<{ url: string, loop: boolean }> = $state([]);
 
   function handleInteraction(event: Event) {
     attemptAutoplay();
@@ -141,30 +141,30 @@
   
   const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {
     mangaPageUrl = await makePageUrlCached({ page, chapterIndex });
-    let newBgmUrls: Array<string> = [];
+    let newBgms: Array<{ url: string, loop: boolean }> = [];
 
     if (bgm !== null) {
-      newBgmUrls = [
-        ...newBgmUrls,
-        await makeBgmUrlCached(bgm),
+      newBgms = [
+        ...newBgms,
+        { url: await makeBgmUrlCached(bgm), loop: true },
       ];
     }
 
     for (const soundEffect of se) {
-      newBgmUrls = [
-        ...newBgmUrls,
-        await makeSeUrlCached(soundEffect),
+      newBgms = [
+        ...newBgms,
+        { url: await makeSeUrlCached(soundEffect), loop: true },
       ];
     }
 
     if (voice) {
-      newBgmUrls = [
-        ...newBgmUrls,
-        URL.createObjectURL(await getVoice({ chapterIndex, page })),
+      newBgms = [
+        ...newBgms,
+        { url: URL.createObjectURL(await getVoice({ chapterIndex, page })), loop: false },
       ];
     }
 
-    bgmUrls = newBgmUrls;
+    bgms = newBgms;
     setTimeout(attemptAutoplay, 100);
   };
 
@@ -213,9 +213,9 @@
       {#if mangaPageUrl !== null}
         <img src={mangaPageUrl} alt="Manga Page" />
       {/if}
-      {#each bgmUrls as bgmUrl (bgmUrl)}
-        <audio class="background-sound" loop>
-          <source src={bgmUrl} type="audio/ogg" />
+      {#each bgms as { url, loop } (url)}
+        <audio class="background-sound" loop={loop}>
+          <source src={url} type="audio/ogg" />
         </audio>
       {/each}
     </div>
