@@ -208,6 +208,14 @@
   }
 </script>
 
+<button class="volume-button" onclick={toggleMute} aria-label={$isMuted ? "Unmute audio" : "Mute audio"}>
+  {#if $isMuted}
+    <VolumeX size={30} />
+  {:else}
+    <Volume2 size={30} />
+  {/if}
+</button>
+
 <div class="manga-container" role="presentation">
   <div class="buttons-column">
     <button class="nav-button" onclick={navigateToPreviousPage}>
@@ -223,13 +231,6 @@
   </div>
   
   <div class="buttons-column">
-    <button class="volume-button" onclick={toggleMute} aria-label={$isMuted ? "Unmute audio" : "Mute audio"}>
-      {#if $isMuted}
-        <VolumeX size={30} />
-      {:else}
-        <Volume2 size={30} />
-      {/if}
-    </button>
     <button class="nav-button" onclick={navigateToNextPage}>
       <ChevronRight size={48} />
     </button>
@@ -271,13 +272,29 @@
     flex-direction: column;
     justify-content: center;
     flex-grow: 1;
+
+    transition: background 0.1s linear;
+  }
+
+  .nav-button:hover {
+    cursor: pointer;
+    background: color-mix(in srgb, var(--color-contrast) 20%, transparent 80%);
   }
 
   .volume-button {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+
     background: transparent;
     border: none;
     color: var(--color-contrast);
   }
+
+  .volume-button:hover {
+    cursor: pointer;
+  }
+
   .buttons-column {
     display: flex;
     flex-direction: column;

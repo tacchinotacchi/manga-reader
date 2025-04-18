@@ -32,6 +32,9 @@
 
 <style>
   .container {
+    /* an element inside of this uses position: absolute; */
+    position: relative;
+
     display: flex;
     flex-direction: column;
     justify-content: center;
