@@ -25,15 +25,26 @@
     </div>
   {/if}
 
-  <div class="content">
+  <div class="container" style="height: calc(100% - {$disableHeader ? 0 : 3}em);">
     <slot />
   </div>
 </div>
 
 <style>
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    flex-grow: 1;
+  }
+
   .everything {
     display: flex;
     flex-direction: column;
+    gap: 0.5em;
+
     height: 100vh;
     width: 100vw;
   }
@@ -42,7 +53,6 @@
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    height: 1.2em;
     padding: 0.5em;
     border-bottom: 1px solid var(--color-muted);
   }
@@ -50,12 +60,6 @@
   .title {
     font-size: 1.2em;
     font-weight: bold;
-  }
-
-  .content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5em;
   }
 
   .header-right {

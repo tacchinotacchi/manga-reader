@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { getBGM, getPage, getSE, getVoice, manga } from "$lib";
+  import { bgmVolume, getBGM, getPage, getSE, getVoice, manga, seVolume, voiceVolume } from "$lib";
   import { onMount } from "svelte";
-  import { ChevronLeft, ChevronRight } from "lucide-svelte";
+  import { ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-svelte";
   import { browser } from "$app/environment";
   import { pushState } from "$app/navigation";
+  import { persisted } from "svelte-persisted-store";
 
   let chapterIndex: number = $state(0);
   let pageIndex: number = $state(0);
+  let isMuted = persisted<boolean>("muted", false);
 
   onMount(() => {
     if (browser) {
@@ -67,7 +69,7 @@
   };
 
   let mangaPageUrl: string | null = $state(null);
-  let bgms: Array<{ url: string, loop: boolean }> = $state([]);
+  let bgms: Array<{ url: string, loop: boolean, type: "bgm" | "se" | "voice" }> = $state([]);
 
   function handleInteraction(event: Event) {
     attemptAutoplay();
@@ -141,26 +143,26 @@
   
   const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {
     mangaPageUrl = await makePageUrlCached({ page, chapterIndex });
-    let newBgms: Array<{ url: string, loop: boolean }> = [];
+    let newBgms: Array<{ url: string, loop: boolean, type: "bgm" | "se" | "voice" }> = [];
 
     if (bgm !== null) {
       newBgms = [
         ...newBgms,
-        { url: await makeBgmUrlCached(bgm), loop: true },
+        { url: await makeBgmUrlCached(bgm), loop: true, type: "bgm" },
       ];
     }
 
     for (const soundEffect of se) {
       newBgms = [
         ...newBgms,
-        { url: await makeSeUrlCached(soundEffect), loop: true },
+        { url: await makeSeUrlCached(soundEffect), loop: true, type: "se" },
       ];
     }
 
     if (voice) {
       newBgms = [
         ...newBgms,
-        { url: URL.createObjectURL(await getVoice({ chapterIndex, page })), loop: false },
+        { url: URL.createObjectURL(await getVoice({ chapterIndex, page })), loop: false, type: "voice" },
       ];
     }
 
@@ -200,49 +202,55 @@
       document.removeEventListener('keydown', handleInteraction);
     };
   });
+
+  function toggleMute() {
+    $isMuted = !$isMuted;
+  }
 </script>
 
-<div class="container">
-  <div class="manga-container" role="presentation">
+<div class="manga-container" role="presentation">
+  <div class="buttons-column">
     <button class="nav-button" onclick={navigateToPreviousPage}>
       <ChevronLeft size={48} />
     </button>
-    
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="manga-content" onclick={handleInteraction} onkeydown={handleInteraction}>
-      {#if mangaPageUrl !== null}
-        <img src={mangaPageUrl} alt="Manga Page" />
+  </div>
+  
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="manga-content" onclick={handleInteraction} onkeydown={handleInteraction}>
+    {#if mangaPageUrl !== null}
+      <img class="manga-image" src={mangaPageUrl} alt="Manga Page" />
+    {/if}
+  </div>
+  
+  <div class="buttons-column">
+    <button class="volume-button" onclick={toggleMute} aria-label={$isMuted ? "Unmute audio" : "Mute audio"}>
+      {#if $isMuted}
+        <VolumeX size={30} />
+      {:else}
+        <Volume2 size={30} />
       {/if}
-      {#each bgms as { url, loop } (url)}
-        <audio class="background-sound" loop={loop}>
-          <source src={url} type="audio/ogg" />
-        </audio>
-      {/each}
-    </div>
-    
+    </button>
     <button class="nav-button" onclick={navigateToNextPage}>
       <ChevronRight size={48} />
     </button>
   </div>
 </div>
 
+{#each bgms as { url, loop, type } (url)}
+  <audio class="background-sound" loop={loop} volume={(type === "bgm" ? $bgmVolume : (type === "se" ? $seVolume : $voiceVolume)) / 100} muted={$isMuted}>
+    <source src={url} type="audio/ogg" />
+  </audio>
+{/each}
+
 <style>
-  .container {
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
   .manga-container {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
+
     width: 100%;
+    height: 100%;
 
     gap: 3em;
   }
@@ -251,11 +259,40 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100%;
   }
 
   .nav-button {
     background: transparent;
     border: none;
     color: var(--color-contrast);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+  }
+
+  .volume-button {
+    background: transparent;
+    border: none;
+    color: var(--color-contrast);
+  }
+  .buttons-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    height: 95%;
+  }
+
+  .background-sound {
+    display: none;
+  }
+
+  .manga-image {
+    max-width: 100%;
+    height: 95%;
+    object-fit: contain;
   }
 </style>
