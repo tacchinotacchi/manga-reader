@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { bgmVolume, getBGM, getPage, getSE, getVoice, manga, seVolume, voiceVolume } from "$lib";
+  import { bgmVolume, getBGM, getPage, getSE, getVoice, isMobile, manga, seVolume, voiceVolume } from "$lib";
   import { onMount } from "svelte";
   import { ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-svelte";
   import { browser } from "$app/environment";
@@ -85,9 +85,30 @@
         navigateToNextPage();
       }
     }
+    else if (
+      $isMobile
+      && event instanceof PointerEvent
+    ) {
+      const clickX = event.clientX;
+      const containerWidth = window.innerWidth;
+      
+      // If click is in the left 25% of the image, go to previous page
+      if (clickX < containerWidth * 0.25) {
+        navigateToPreviousPage();
+      } 
+      // If click is in the right 75% of the image, go to next page
+      else {
+        navigateToNextPage();
+      }
+    }
   }
 
+  let alreadyAutoplayed = $state(false);
   function attemptAutoplay() {
+    if (alreadyAutoplayed) {
+      return;
+    }
+
     // Get all background sound elements
     const backgroundSounds = document.querySelectorAll('.background-sound');
     
@@ -97,6 +118,7 @@
         element.play()
           .then(() => {
             // Audio successfully playing
+            alreadyAutoplayed = true;
           })
           .catch(error => {
             console.error("Background sound play failed:", error);
@@ -123,6 +145,7 @@
     }
 
     pushState(`/reader?chapter=${chapterIndex}&page=${pageIndex}`, {});
+    alreadyAutoplayed = false;
   }
 
   function navigateToNextPage() {
@@ -139,6 +162,7 @@
     }
 
     pushState(`/reader?chapter=${chapterIndex}&page=${pageIndex}`, {});
+    alreadyAutoplayed = false;
   }
   
   const onPageChange = async ({ page, bgm, se, voice }: { page: string, bgm: string | null, se: Array<string>, voice: boolean }) => {
@@ -208,33 +232,39 @@
   }
 </script>
 
-<button class="volume-button" onclick={toggleMute} aria-label={$isMuted ? "Unmute audio" : "Mute audio"}>
-  {#if $isMuted}
-    <VolumeX size={30} />
-  {:else}
-    <Volume2 size={30} />
-  {/if}
-</button>
+{#if !$isMobile}
+  <button class="volume-button" onclick={toggleMute} aria-label={$isMuted ? "Unmute audio" : "Mute audio"}>
+    {#if $isMuted}
+      <VolumeX size={30} />
+    {:else}
+      <Volume2 size={30} />
+    {/if}
+  </button>
+{/if}
 
 <div class="manga-container" role="presentation">
-  <div class="buttons-column">
-    <button class="nav-button" onclick={navigateToPreviousPage}>
-      <ChevronLeft size={48} />
-    </button>
-  </div>
+  {#if !$isMobile}
+    <div class="buttons-column">
+        <button class="nav-button" onclick={navigateToPreviousPage}>
+          <ChevronLeft size={48} />
+      </button>
+    </div>
+  {/if}
   
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="manga-content" onclick={handleInteraction} onkeydown={handleInteraction}>
+  <div class="manga-content">
     {#if mangaPageUrl !== null}
       <img class="manga-image" src={mangaPageUrl} alt="Manga Page" />
     {/if}
   </div>
-  
-  <div class="buttons-column">
-    <button class="nav-button" onclick={navigateToNextPage}>
-      <ChevronRight size={48} />
-    </button>
-  </div>
+
+  {#if !$isMobile}
+    <div class="buttons-column">
+      <button class="nav-button" onclick={navigateToNextPage}>
+        <ChevronRight size={48} />
+      </button>
+    </div>
+  {/if}
 </div>
 
 {#each bgms as { url, loop, type } (url)}

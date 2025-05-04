@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { manga, processFiles, resetDatabase, voiceVolume, seVolume, bgmVolume, disableHeader } from "$lib/index";
+  import { manga, processFiles, resetDatabase, voiceVolume, seVolume, bgmVolume, disableHeader, isMobile } from "$lib/index";
 
   let progress = 0;
   let isProcessing = false;
@@ -112,7 +112,7 @@ bgm/
     {/if}
   </div>
 
-  <div class="vertical-divider"></div>
+  <div class="section-divider"></div>
 
   <div class="toc-container">
     <div class="title">Table of Contents</div>
@@ -123,13 +123,23 @@ bgm/
     {/each}
   </div>
 
-  <div class="vertical-divider"></div>
+  <div class="section-divider"></div>
 
   <div class="settings-container">
     <div class="title">Settings</div>
     <div class="settings-content">
       <div class="settings-content-group">
-        <label for="voice-volume">Voice Volume: {Math.round($voiceVolume)}</label>
+        <div>
+          Voice Volume:
+          <input 
+            type="number"
+            id="voice-volume-text"
+            class="volume-input"
+            min="0"
+            max="100"
+            bind:value={$voiceVolume}
+          />
+        </div>
         <input 
           type="range"
           id="voice-volume"
@@ -140,7 +150,17 @@ bgm/
       </div>
       
       <div class="settings-content-group">
-        <label for="se-volume">Sound Effect Volume: {Math.round($seVolume)}</label>
+        <div>
+          Sound Effect Volume:
+          <input 
+            type="number"
+            id="se-volume-text"
+            class="volume-input"
+            min="0"
+            max="100"
+            bind:value={$seVolume}
+          />
+        </div>
         <input 
           type="range" 
           id="se-volume" 
@@ -151,7 +171,18 @@ bgm/
       </div>
       
       <div class="settings-content-group">
-        <label for="bgm-volume">Background Music Volume: {Math.round($bgmVolume)}</label>
+        <div>
+          Background Music Volume:
+          <input 
+            type="number"
+            id="bgm-volume-text"
+            class="volume-input"
+            min="0"
+            max="100"
+            bind:value={$bgmVolume}
+          />
+        </div>
+
         <input 
           type="range" 
           id="bgm-volume" 
@@ -161,14 +192,16 @@ bgm/
         />
       </div>
 
-      <div class="settings-content-checkbox-group">
-        <label for="enable-header">Disable site header</label>
-        <input 
-          type="checkbox" 
-          id="disable-header" 
-          bind:checked={$disableHeader}
-        />
-      </div>
+      {#if !$isMobile}
+        <div class="settings-content-checkbox-group">
+          <label for="enable-header">Disable site header</label>
+          <input 
+            type="checkbox" 
+            id="disable-header" 
+            bind:checked={$disableHeader}
+          />
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -182,7 +215,7 @@ bgm/
     margin-bottom: 0.5em;
   }
 
-  .vertical-divider {
+  .section-divider {
     width: 1px;
     background-color: var(--color-muted);
   }
@@ -194,10 +227,29 @@ bgm/
     align-items: stretch;
     gap: 2em;
 
-    padding-left: 10em;
-    padding-right: 10em;
+    padding-top: 1em;
+    padding-bottom: 1em;
 
     height: 100%;
+  }
+  
+  @media screen and (max-width: 50em) {
+    .main-container {
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+
+      gap: 1em;
+
+      height: auto;
+    }
+
+    .section-divider {
+      width: 100%;
+      min-height: 1px;
+      background-color: var(--color-muted);
+      margin: 1em 0;
+    }
   }
 
   .loading-container {
@@ -345,5 +397,14 @@ bgm/
   input[type="range"]::-webkit-slider-runnable-track {
     height: 8px;
     border-radius: 4px;
+  }
+
+  input[type="number"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: var(--color-background);
+    color: var(--color-contrast);
+    border: 1px solid var(--color-muted);
+    font-size: 0.9em;
   }
 </style>

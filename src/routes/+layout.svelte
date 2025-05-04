@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
-  import { darkMode, disableHeader } from "$lib/index";
+  import { darkMode, disableHeader, isMobile } from "$lib/index";
+  import { onMount } from "svelte";
 
   $effect(() => {
     if ($darkMode) {
@@ -9,10 +10,16 @@
       document.documentElement.classList.remove('dark-mode');
     }
   });
+  
+  onMount(() => {
+    setInterval(() => {
+      $isMobile = window.innerWidth <= 700;
+    }, 50);
+  });
 </script>
 
 <div class="everything">
-  {#if !$disableHeader}
+  {#if !$isMobile && !$disableHeader}
     <div class="header">
       <a href="/" class="title">seagulls.live</a>
       <div class="header-right">
@@ -37,10 +44,8 @@
 
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
 
-    flex-grow: 1;
+    overflow-y: auto;
   }
 
   .everything {

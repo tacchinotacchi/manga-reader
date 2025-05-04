@@ -1,5 +1,5 @@
 import { persisted } from "svelte-persisted-store";
-import { derived } from "svelte/store";
+import { derived, writable } from "svelte/store";
 
 import { z } from "zod";
 
@@ -138,8 +138,10 @@ export const manga = persisted<Manga | null>("manga", null);
 export const disableHeader = persisted<boolean>("disable-header", false);
 export const darkMode = persisted<boolean>("dark-mode", false);
 export const voiceVolume = persisted<number>("voice-volume", 100);
-export const seVolume = persisted<number>("se-volume", 100);
-export const bgmVolume = persisted<number>("bgm-volume", 100);
+export const seVolume = persisted<number>("se-volume", 80);
+export const bgmVolume = persisted<number>("bgm-volume", 80);
+
+export const isMobile = writable<boolean>(false);
 
 export const getPage = async ({ chapterIndex, page }: { chapterIndex: number, page: string }): Promise<Blob> => {
   const fullPath = `img/ch-${chapterIndex + 1}/${page}.jpg`;
