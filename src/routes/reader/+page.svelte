@@ -92,11 +92,11 @@
       const clickX = event.clientX;
       const containerWidth = window.innerWidth;
       
-      // If click is in the left 25% of the image, go to previous page
-      if (clickX < containerWidth * 0.25) {
+      // If click is in the left 30% of the image, go to previous page
+      if (clickX < containerWidth * 0.30) {
         navigateToPreviousPage();
       } 
-      // If click is in the right 75% of the image, go to next page
+      // If click is in the right 70% of the image, go to next page
       else {
         navigateToNextPage();
       }
